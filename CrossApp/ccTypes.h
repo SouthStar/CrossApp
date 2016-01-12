@@ -20,12 +20,39 @@ typedef struct _Color4B
     GLubyte b;
     GLubyte a;
 } CAColor4B;
+
 //! helper macro that creates an CAColor4B type
 static inline CAColor4B
 ccc4(const GLubyte r, const GLubyte g, const GLubyte b, const GLubyte o)
 {
     CAColor4B c = {r, g, b, o};
     return c;
+}
+
+static inline CAColor4B
+ccc4Int(unsigned int rgba)
+{
+    CAColor4B c;
+    c.b = rgba % 0x100;
+    rgba /= 0x100;
+    c.g = rgba % 0x100;
+    rgba /= 0x100;
+    c.r = rgba % 0x100;
+    rgba /= 0x100;
+    c.a = rgba % 0x100;
+    return c;
+}
+
+static inline int
+getIntFormColor4B(const CAColor4B& color)
+{
+    return (color.b + color.g * 0x100 + color.r * 0x10000 + color.a * 0x1000000);
+}
+
+static inline unsigned int
+getUIntFormColor4B(const CAColor4B& color)
+{
+    return (color.b + color.g * 0x100 + color.r * 0x10000 + color.a * 0x1000000);
 }
 
 //CAColor4B predefined colors
@@ -48,12 +75,13 @@ static const CAColor4B CAColor_orange  = {255, 127,   0, 255};
 //! Gray Color (166,166,166,255)
 static const CAColor4B CAColor_gray    = {166, 166, 166, 255};
 //! Gray Color (0,0,0,0)
-static const CAColor4B CAColor_clear   = {  0,   0,   0,   0};
+static const CAColor4B CAColor_clear   = {255, 255, 255,   0};
 
 /** RGBA color composed of 4 floats
 @since v0.8
 */
-typedef struct _Color4F {
+typedef struct _Color4F
+{
     GLfloat r;
     GLfloat g;
     GLfloat b;
@@ -85,10 +113,18 @@ static inline CAColor4B ccc4BFromccc4F(CAColor4F c)
 }
 
 
+/** returns YES if both CAColor4B are equal. Otherwise it returns NO.
+ @since v0.99.1
+ */
+static inline bool CAColor4BEqual(CAColor4B a, CAColor4B b)
+{
+    return a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
+}
+
 /** returns YES if both CAColor4F are equal. Otherwise it returns NO.
  @since v0.99.1
  */
-static inline bool ccc4FEqual(CAColor4F a, CAColor4F b)
+static inline bool CAColor4FEqual(CAColor4F a, CAColor4F b)
 {
     return a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
 }
@@ -141,12 +177,12 @@ static inline ccTex2F tex2(const float u, const float v)
 
  
 //! Point Sprite component
-typedef struct _ccPointSprite
+typedef struct _DPointSprite
 {
     ccVertex2F    pos;        // 8 bytes
     CAColor4B    color;        // 4 bytes
     GLfloat        size;        // 4 bytes
-} ccPointSprite;
+} DPointSprite;
 
 //!    A 2D Quad. 4 * 2 floats
 typedef struct _ccQuad2 {
@@ -301,8 +337,14 @@ typedef struct
 {
     ccT2F_Quad texCoords;
     float delay;
-    CCSize size; 
+    DSize size; 
 } CAAnimationFrameData;
+
+typedef enum
+{
+    CAStatusBarStyleDefault          = 0, // Dark content, for use on light backgrounds
+    CAStatusBarStyleLightContent     = 1, // Light content, for use on dark backgrounds
+}CAStatusBarStyle;
 
 /**
  * This header is used for defining event types using in CANotificationCenter
@@ -317,6 +359,8 @@ typedef struct
 // This message is used for doing something before coming to background, such as save CARenderImage.
 // This message is posted in CrossApp/platform/android/jni/MessageJni.cpp.
 #define EVENT_COME_TO_BACKGROUND    "event_come_to_background"
+
+#define LINE_WIDTH MAX(s_px_to_dip(1.0f), 1.0f)
 
 NS_CC_END
 

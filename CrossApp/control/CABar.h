@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 http://9miao.com All rights reserved.
 //
 
-#ifndef __CrossAppx__CABar__
-#define __CrossAppx__CABar__
+#ifndef __CrossApp__CABar__
+#define __CrossApp__CABar__
 
 #include <iostream>
 #include "view/CAView.h"
@@ -33,28 +33,24 @@ class CC_DLL CANavigationBar
     
 public:
     
-    CREATE_FUNC(CANavigationBar);
-    
-    void pushItem(CANavigationBarItem* item);
-    
-    void popItem();
-    
+    static CANavigationBar* create(const DSize& size = DSizeZero);
+
 public:
     
     CANavigationBar();
     
     virtual ~CANavigationBar();
     
-    virtual bool init();
+    virtual bool init(const DSize& size = DSizeZero);
     
     virtual void onEnterTransitionDidFinish();
     
     virtual void onExitTransitionDidStart();
     
-    virtual void setBackGroundImage(CAImage* var);
+    virtual void setBackgroundView(CAView* var);
     
-    CC_SYNTHESIZE_READONLY(CAImage*, m_pBackGroundImage, BackGroundImage);
-    
+    CC_SYNTHESIZE_READONLY(CAView*, m_pBackgroundView, BackgroundView);
+
     virtual void setTitleColor(const CAColor4B& color);
     
     CC_SYNTHESIZE_READONLY_PASS_BY_REF(CAColor4B, m_cTitleColor, TitleColor);
@@ -65,13 +61,13 @@ public:
     
     CC_SYNTHESIZE(CANavigationBarDelegate* , m_pDelegate, Delegate);
     
-    CC_SYNTHESIZE_READONLY_PASS_BY_REF(CAVector<CANavigationBarItem*>, m_pItems, Items);
+    virtual void setItem(CANavigationBarItem* item);
     
-    void replaceItemAtIndex(size_t index, CANavigationBarItem* item);
-    
+    CC_SYNTHESIZE_READONLY(CANavigationBarItem*, m_pItem, Item);
+
 protected:
     
-    void showBackGround();
+    void showBackground();
     
     void showTitle();
     
@@ -79,13 +75,13 @@ protected:
     
     void showRightButton();
     
-    void goBack(CAControl* btn, CCPoint point);
+    void goBack(CAControl* btn, DPoint point);
     
     void updateNavigationBar();
     
 protected:
     
-    CAView* m_pBackGround;
+    CAView* m_pContentView;
     
     CAView* m_pTitle;
     
@@ -105,16 +101,42 @@ public:
     
 };
 
+class CC_DLL CABadgeView: public CAView
+{
+public:
+    
+    CABadgeView();
+    
+    virtual ~CABadgeView();
+    
+    bool init();
+    
+    void setBadgeText(const std::string& text);
+    
+    virtual void setContentSize(const DSize& contentSize);
+    
+protected:
+    
+    CAScale9ImageView* m_pBackground;
+    
+    CALabel* m_pTextView;
+    
+};
+
+typedef enum
+{
+    CABarVerticalAlignmentTop = 0,
+    CABarVerticalAlignmentBottom
+}CABarVerticalAlignment;
+
 class CC_DLL CATabBar
 :public CAView
 {
     
 public:
     
-    static CATabBar* create(const std::vector<CATabBarItem*>& items, const CCSize& size = CCSizeZero);
+    static CATabBar* create(const CAVector<CATabBarItem*>& items, const DSize& size = DSizeZero, const CABarVerticalAlignment& var = CABarVerticalAlignmentBottom);
     
-    void setItems(const std::vector<CATabBarItem*>& items);
-
 	void setItems(const CAVector<CATabBarItem*>& items);
     
 public:
@@ -122,63 +144,75 @@ public:
     CATabBar();
     
     virtual ~CATabBar();
+
+    virtual bool init(const CAVector<CATabBarItem*>& items, const DSize& size = DSizeZero, const CABarVerticalAlignment& var = CABarVerticalAlignmentBottom);
     
-    virtual bool init(const std::vector<CATabBarItem*>& items, const CCSize& size = CCSizeZero);
+    CC_PROPERTY(CAImage*, m_pBackgroundImage, BackgroundImage);
     
-    CC_PROPERTY(CAView*, m_pBackGroundView, BackGroundView);
+    CC_PROPERTY_PASS_BY_REF(CAColor4B, m_sBackgroundColor, BackgroundColor);
     
-    CC_PROPERTY(CAImage*, m_pBackGroundImage, BackGroundImage);
+    CC_PROPERTY(CAImage*, m_pSelectedBackgroundImage, SelectedBackgroundImage);
     
-    CC_PROPERTY(CAView*, m_pSelectedBackGroundView, SelectedBackGroundView);
-    
-    CC_PROPERTY(CAImage*, m_pSelectedBackGroundImage, SelectedBackGroundImage);
-    
-    CC_PROPERTY(CAView*, m_pSelectedIndicatorView, SelectedIndicatorView);
-    
+    CC_PROPERTY_PASS_BY_REF(CAColor4B, m_sSelectedBackgroundColor, SelectedBackgroundColor);
+
     CC_PROPERTY(CAImage*, m_pSelectedIndicatorImage, SelectedIndicatorImage);
+    
+    CC_PROPERTY_PASS_BY_REF(CAColor4B, m_sSelectedIndicatorColor, SelectedIndicatorColor);
     
     CC_PROPERTY_PASS_BY_REF(CAColor4B, m_sTitleColor, TitleColorForNormal);
     
     CC_PROPERTY_PASS_BY_REF(CAColor4B, m_sSelectedTitleColor, TitleColorForSelected);
-    
-    CC_SYNTHESIZE(unsigned int, m_nMaxShowCount, MaxShowCount)
-    
+        
     CC_SYNTHESIZE(CATabBarDelegate* , m_pDelegate, Delegate);
     
     CC_SYNTHESIZE_READONLY_PASS_BY_REF(CAVector<CATabBarItem*>, m_pItems, Items);
+    
+    CC_SYNTHESIZE_READONLY_PASS_BY_REF(DSize, m_cItemSize, ItemSize);
     
     CC_SYNTHESIZE_READONLY(int, m_nSelectedIndex, SelectedIndex);
     
     void setSelectedAtIndex(int index);
     
-    void setForbidSelectedAtIndex(int index);
+    CC_SYNTHESIZE_READONLY(std::set<int>, m_sForbidSelectedIndexs, ForbidSelectedIndexs);
+    
+    void addForbidSelectedAtIndex(int index);
     
     void showSelectedIndicator();
     
     void replaceItemAtIndex(size_t index, CATabBarItem* item);
     
-    const CCRect& getSegmentedControlFrame();
-    
+    const DRect& getContentViewFrame();
+
 protected:
     
-    void showBackGround();
+    void showBackground();
     
-    void showItems();
+    void showSelectedBackground();
     
-    void setTouchSelected(CAControl* control, CCPoint point);
+    void showSelectedIndicatorView();
     
-    void setTouchUpInSide(CAControl* control, CCPoint point);
-    
+    void setTouchSelected(CAControl* control, DPoint point);
+
 protected:
+    
+    bool m_bShowIndicator;
+    
+    CABarVerticalAlignment m_eVerticalAlignment;
     
     CATabBarItem* m_pSelectedItem;
-    
-    CCSize m_cItemSize;
 
-    CASegmentedControl* m_pSegmentedControl;
+    CAView* m_pBackgroundView;
+    
+    CAView* m_pContentView;
+    
+    CAView* m_pSelectedIndicatorView;
+    
+    CAVector<CAButton*> m_pButtons;
+    
+    CAVector<CABadgeView*> m_pBadgeViews;
 };
 
 
 NS_CC_END
 
-#endif /* defined(__CrossAppx__CABar__) */
+#endif /* defined(__CrossApp__CABar__) */

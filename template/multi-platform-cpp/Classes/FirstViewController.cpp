@@ -14,18 +14,23 @@ FirstViewController::~FirstViewController()
 void FirstViewController::viewDidLoad()
 {
     // Do any additional setup after loading the view from its nib.
-	CCRect winRect = this->getView()->getBounds();
-    CAImageView* imageView = CAImageView::createWithImage(CAImage::create("HelloWorld.png"));
+	DRect winRect = this->getView()->getBounds();
+    CAImageView* imageView = CAImageView::createWithImage(CAImage::create("r/HelloWorld.png"));
+    imageView->setImageViewScaleType(CAImageViewScaleTypeFitImageCrop);
     imageView->setFrame(winRect);
     this->getView()->addSubview(imageView);
-    
-    CALabel* label = CALabel::createWithCenter(CCRect(winRect.size.width*0.5, winRect.size.height*0.5-270, winRect.size.width, 200));
+
+    DRect rect;
+    rect.size = DSize(600, 200);
+    rect.origin = winRect.size/2;
+    rect.origin.y -= 360;
+    CALabel* label = CALabel::createWithCenter(rect);
     label->setTextAlignment(CATextAlignmentCenter);
     label->setVerticalTextAlignmet(CAVerticalTextAlignmentCenter);
-    label->setFontSize(72 * CROSSAPP_ADPTATION_RATIO);
+    label->setFontSize(72);
     label->setText("Hello World!");
     label->setColor(CAColor_white);
-    this->getView()->insertSubview(label, 1);
+    this->getView()->addSubview(label);
 }
 
 void FirstViewController::viewDidUnload()

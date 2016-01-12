@@ -7,10 +7,7 @@
 //
 
 #include "CADrawerController.h"
-#include "actions/CCActionInterval.h"
-#include "actions/CCActionInstant.h"
-#include "actions/CCActionEase.h"
-#include "basics/CAScheduler.h"
+#include "animation/CAAnimation.h"
 #include "basics/CAApplication.h"
 #include "dispatcher/CATouchDispatcher.h"
 
@@ -22,17 +19,20 @@ CADrawerController::CADrawerController()
 ,m_fDivision(0)
 ,m_fCurrDivision(0)
 ,m_bShow(false)
+,m_bEffect3D(false)
 ,m_fOffX(0)
+,m_bAnimation(false)
 ,m_pBackgroundView(NULL)
 {
     this->getView()->setColor(CAColor_clear);
-    this->setTouchMovedListenVertical(false);
     this->setTouchMoved(true);
+    this->setVerticalScrollEnabled(false);
 }
 
 CADrawerController::~CADrawerController()
 {
-
+    CC_SAFE_RELEASE(m_pLeftViewController);
+    CC_SAFE_RELEASE(m_pRightViewController);
 }
 
 bool CADrawerController::initWithController(CAViewController* leftViewController, CAViewController* rightViewController, float division)
@@ -89,10 +89,10 @@ CAViewController* CADrawerController::getRightViewController()
 
 void CADrawerController::viewDidLoad()
 {    
-    m_rHideFrame[0] = CCRect(-m_fDivision, 0, m_fDivision, this->getView()->getBounds().size.height);
-    m_rHideFrame[1] = CCRect(0 , 0, this->getView()->getBounds().size.width, this->getView()->getBounds().size.height);
-    m_rShowFrame[0] = CCRect(0, 0, m_fDivision, this->getView()->getBounds().size.height);
-    m_rShowFrame[1] = CCRect(m_fDivision , 0, this->getView()->getBounds().size.width, this->getView()->getBounds().size.height);
+    m_rHideFrame[0] = DRect(-m_fDivision, 0, m_fDivision, this->getView()->getBounds().size.height);
+    m_rHideFrame[1] = DRect(0 , 0, this->getView()->getBounds().size.width, this->getView()->getBounds().size.height);
+    m_rShowFrame[0] = DRect(0, 0, m_fDivision, this->getView()->getBounds().size.height);
+    m_rShowFrame[1] = DRect(m_fDivision , 0, this->getView()->getBounds().size.width, this->getView()->getBounds().size.height);
     
     
     for (int i=0; i<2; i++)
@@ -103,8 +103,8 @@ void CADrawerController::viewDidLoad()
         m_pContainer[i]->release();
     }
     
-    m_pContainer[0]->setAnchorPoint(CCPoint(1.0f, 0.5f));
-    m_pContainer[1]->setAnchorPoint(CCPoint(0.0f, 0.5f));
+    m_pContainer[0]->setAnchorPoint(DPoint(1.0f, 0.5f));
+    m_pContainer[1]->setAnchorPoint(DPoint(0.0f, 0.5f));
     
     m_pLeftViewController->addViewFromSuperview(m_pContainer[0]);
     m_pRightViewController->addViewFromSuperview(m_pContainer[1]);
@@ -154,7 +154,7 @@ void CADrawerController::reshapeViewRectDidFinish()
         m_pBackgroundView->setFrame(this->getView()->getBounds());
     }
     
-    CCRect* rect;
+    DRect* rect;
     if (m_bShow)
     {
         rect = m_rShowFrame;
@@ -175,6 +175,7 @@ void CADrawerController::reshapeViewRectDidFinish()
 
 void CADrawerController::showLeftViewController(bool animated)
 {
+    CC_RETURN_IF(m_bAnimation);
     m_bShow = true;
 
     if (animated)
@@ -182,8 +183,8 @@ void CADrawerController::showLeftViewController(bool animated)
         this->showBegin();
         m_fCurrDivision = m_pContainer[1]->getFrameOrigin().x;
         CAApplication::getApplication()->getTouchDispatcher()->setDispatchEventsFalse();
-        CAScheduler::unscheduleAllForTarget(this);
         CAScheduler::schedule(schedule_selector(CADrawerController::scheduleShowAction), this, 1/60.0f);
+        m_bAnimation = true;
     }
     else
     {
@@ -191,20 +192,19 @@ void CADrawerController::showLeftViewController(bool animated)
         this->updateViewFrame();
         this->hideEnded();
     }
-    m_bSlidingMaxX = false;
-    m_bSlidingMinX = true;
 }
 
 void CADrawerController::hideLeftViewController(bool animated)
 {
+    CC_RETURN_IF(m_bAnimation);
     m_bShow = false;
     
     if (animated)
     {
         m_fCurrDivision = m_pContainer[1]->getFrameOrigin().x;
         CAApplication::getApplication()->getTouchDispatcher()->setDispatchEventsFalse();
-        CAScheduler::unscheduleAllForTarget(this);
         CAScheduler::schedule(schedule_selector(CADrawerController::scheduleHideAction), this, 1/60.0f);
+        m_bAnimation = true;
     }
     else
     {
@@ -212,8 +212,6 @@ void CADrawerController::hideLeftViewController(bool animated)
         this->updateViewFrame();
         this->hideEnded();
     }
-    m_bSlidingMaxX = true;
-    m_bSlidingMinX = false;
 }
 
 bool CADrawerController::isShowLeftViewController()
@@ -239,28 +237,27 @@ void CADrawerController::hideEnded()
 
 void CADrawerController::updateViewFrame()
 {
-    CCPoint point[2] =
+    DPoint point[2] =
     {
-        CCPoint(m_fCurrDivision - m_fDivision, 0),
-        CCPoint(m_fCurrDivision, 0)
+        DPoint(m_fCurrDivision - m_fDivision, 0),
+        DPoint(m_fCurrDivision, 0)
     };
     
-    if (1)
+    if (m_bEffect3D)
     {
         float scale0 = 0.5f + 0.5f * m_fCurrDivision / m_fDivision;
         float scale1 = 1.0f - powf(m_fCurrDivision / m_fDivision, 2) * 0.2f;
         
+        m_pContainer[0]->setAlpha(m_fCurrDivision / m_fDivision);
         m_pContainer[0]->setScale(scale0);
         m_pContainer[1]->setScale(scale1);
-        
         point[0].x = (point[1].x - m_pContainer[0]->getFrame().size.width) / 3;
         point[0].y = this->getView()->getBounds().size.height * (1.0f - scale0) / 2;
         point[1].y = this->getView()->getBounds().size.height * (1.0f - scale1) / 2;
     }
-
+    
     m_pContainer[0]->setFrameOrigin(point[0]);
     m_pContainer[1]->setFrameOrigin(point[1]);
-
 }
 
 void CADrawerController::scheduleShowAction(float dt)
@@ -269,6 +266,7 @@ void CADrawerController::scheduleShowAction(float dt)
     {
         CAScheduler::unschedule(schedule_selector(CADrawerController::scheduleShowAction), this);
         CAApplication::getApplication()->getTouchDispatcher()->setDispatchEventsTrue();
+        m_bAnimation = false;
     }
     else
     {
@@ -284,6 +282,7 @@ void CADrawerController::scheduleHideAction(float dt)
         CAScheduler::unschedule(schedule_selector(CADrawerController::scheduleHideAction), this);
         CAApplication::getApplication()->getTouchDispatcher()->setDispatchEventsTrue();
         this->hideEnded();
+        m_bAnimation = false;
     }
     else
     {
@@ -292,9 +291,19 @@ void CADrawerController::scheduleHideAction(float dt)
     }
 }
 
-bool CADrawerController::ccTouchBegan(CATouch *pTouch, CAEvent *pEvent)
+bool CADrawerController::isReachBoundaryLeft()
 {
     return this->isShowLeftViewController();
+}
+
+bool CADrawerController::isReachBoundaryRight()
+{
+    return !this->isShowLeftViewController();
+}
+
+bool CADrawerController::ccTouchBegan(CATouch *pTouch, CAEvent *pEvent)
+{
+    return m_vTouches.size() == 1;
 }
 
 void CADrawerController::ccTouchMoved(CATouch *pTouch, CAEvent *pEvent)
@@ -324,7 +333,7 @@ void CADrawerController::ccTouchEnded(CATouch *pTouch, CAEvent *pEvent)
     {
         this->hideLeftViewController(true);
     }
-    else if (fabsf(m_fOffX) > FLT_EPSILON)
+    else if (std::abs(m_fOffX) > FLT_EPSILON)
     {
         if (m_fOffX > 0)
         {
@@ -373,7 +382,8 @@ CAView* CADrawerController::getBackgroundView()
 
 void CADrawerController::setTouchMoved(bool var)
 {
-    m_bTouchMovedStopSubviews = m_bTouchMoved = var;
+    m_bTouchMoved = var;
+    this->setPriorityScroll(var);
 }
 
 bool CADrawerController::isTouchMoved()

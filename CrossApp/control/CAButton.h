@@ -39,27 +39,41 @@ public:
     
     static CAButton* create(const CAButtonType& buttonType);
     
-    static CAButton* createWithFrame(const CCRect& rect, const CAButtonType& buttonType);
+    static CAButton* createWithFrame(const DRect& rect, const CAButtonType& buttonType);
     
-    static CAButton* createWithCenter(const CCRect& rect, const CAButtonType& buttonType);
+    static CAButton* createWithCenter(const DRect& rect, const CAButtonType& buttonType);
     
 public:
     
     virtual bool init();
     
-    void setBackGroundViewForState(const CAControlState& controlState, CAView *var);
+    void setBackgroundViewForState(const CAControlState& controlState, CAView *var);
     
-    CAView* getBackGroundViewForState(const CAControlState& controlState);
+    CAView* getBackgroundViewForState(const CAControlState& controlState);
     
     void setImageForState(const CAControlState& controlState, CAImage* var);
     
+    CAImage* getImageForState(const CAControlState& controlState);
+    
     void setTitleForState(const CAControlState& controlState, const std::string& var);
+    
+    const std::string& getTitleForState(const CAControlState& controlState);
     
     void setImageColorForState(const CAControlState& controlState, const CAColor4B& var);
     
     void setTitleColorForState(const CAControlState& controlState, const CAColor4B& var);
     
     void setTitleFontName(const std::string& var);
+    
+    void setImageOffset(const DSize& offset);
+    
+    void setImageSize(const DSize& size);
+    
+    void setTitleOffset(const DSize& offset);
+    
+    void setTitleLabelSize(const DSize& size);
+    
+    void setTitleFontSize(float fontSize);
     
     virtual void setControlState(const CAControlState& var);
     
@@ -71,8 +85,6 @@ public:
     
 public:
     
-    CC_SYNTHESIZE_IS(bool, m_closeTapSound, CloseTapSound);
-
     CC_SYNTHESIZE_IS(bool, m_bAllowsSelected, AllowsSelected);
 
     CC_SYNTHESIZE_IS_READONLY(bool, m_bSelected, Selected);
@@ -104,36 +116,58 @@ protected:
     CAColor4B m_sImageColor[CAControlStateAll];
     
     CAColor4B m_sTitleColor[CAControlStateAll];
-    
-    std::string m_sTitleFontName;
-    
+
     CAImageView* m_pImageView;
     
     CALabel* m_pLabel;
     
-    CAView* m_pBackGroundView[CAControlStateAll];
+    CAView* m_pBackgroundView[CAControlStateAll];
+    
+    std::string m_sTitleFontName;
+    
+    float m_fTitleFontSize;
+        
+    DSize m_pTitleLabelSize;
+    
+    bool m_bDefineTitleLabelSize;
+    
+    DSize m_pImageSize;
+    
+    bool m_bDefineImageSize;
+    
+    DSize m_pTitleOffset;
+    
+    bool m_bDefineTitleOffset;
+    
+    DSize m_pImageOffset;
+    
+    bool m_bDefineImageOffset;
     
 protected:
     
     void updateWithPreferredSize();
     
-    void setTouchMoved(const CCPoint& point);
+    void setTouchMoved(const DPoint& point);
     
-    void setTouchMovedOutSide(const CCPoint& point);
+    void setTouchMovedOutSide(const DPoint& point);
     
-    void setTouchUpSide(const CCPoint& point);
+    void setTouchUpOutSide(const DPoint& point);
     
-    void setTouchUpInSide(const CCPoint& point);
+    void setTouchUpInSide(const DPoint& point);
     
-    bool setTouchBegin(const CCPoint& point);
+    bool setTouchBegin(const DPoint& point);
 
-    void setContentSize(const CCSize & var);
-
-    void setBackGroundViewSquareRect();
+    void setTouchLongPress(float dt);
     
-    void setBackGroundViewRoundedRect();
+    void setContentSize(const DSize & var);
+
+    void setBackgroundViewSquareRect();
+    
+    void setBackgroundViewRoundedRect();
 };
 
+#define setBackGroundViewForState(controlState, var) setBackgroundViewForState(controlState, var)
+#define getBackGroundViewForState(controlState, var) getBackgroundViewForState(controlState, var)
 NS_CC_END
 
 #endif /* defined(__CAButton__) */

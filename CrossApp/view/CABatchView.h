@@ -5,7 +5,6 @@
 #include "CAView.h"
 #include "images/CAImageCache.h"
 #include "ccMacros.h"
-#include "cocoa/CCArray.h"
 
 NS_CC_BEGIN
 
@@ -17,7 +16,7 @@ public:
 
     CABatchView();
 
-    ~CABatchView();
+    virtual ~CABatchView();
 
     inline CAImageAtlas* getImageAtlas(void) { return m_pobImageAtlas; }
     
@@ -31,16 +30,16 @@ public:
         }
     }
 
-    inline CCArray* getDescendants(void) { return m_pobDescendants; }
+    inline const CAVector<CAView*>& getDescendants(void) { return m_obDescendants; }
 
-    static CABatchView* createWithImage(CAImage* tex, unsigned int capacity);
+    static CABatchView* createWithImage(CAImage* image, unsigned int capacity);
     
-    static CABatchView* createWithImage(CAImage* tex)
+    static CABatchView* createWithImage(CAImage* image)
     {
-        return CABatchView::createWithImage(tex, kDefaultSpriteBatchCapacity);
+        return CABatchView::createWithImage(image, kDefaultSpriteBatchCapacity);
     }
 
-    bool initWithImage(CAImage *tex, unsigned int capacity);
+    bool initWithImage(CAImage *image, unsigned int capacity);
 
     bool init();
 
@@ -48,19 +47,19 @@ public:
 
     void removeSubviewAtIndex(unsigned int index);
 
-    void insertChild(CAView *child, unsigned int index);
+    void insertSubview(CAView *subview, unsigned int index);
     
-    void appendChild(CAView* sprite);
+    void appendSubview(CAView* subview);
     
-    void removeSpriteFromAtlas(CAView *sprite);
+    void removeViewFromAtlas(CAView *view);
     
-    unsigned int rebuildIndexInOrder(CAView *parent, unsigned int index);
+    unsigned int rebuildIndexInOrder(CAView *superview, unsigned int index);
     
-    unsigned int highestAtlasIndexInChild(CAView *sprite);
+    unsigned int highestAtlasIndexInSubview(CAView *view);
     
-    unsigned int lowestAtlasIndexInChild(CAView *sprite);
+    unsigned int lowestAtlasIndexInSubview(CAView *view);
     
-    unsigned int atlasIndexForChild(CAView *sprite, int z);
+    unsigned int atlasIndexForSubview(CAView *view, int z);
 
     void reorderBatch(bool reorder);
 
@@ -90,15 +89,15 @@ public:
 
 protected:
 
-    void insertQuadFromSprite(CAView *sprite, unsigned int index);
+    void insertQuadFromView(CAView *view, unsigned int index);
 
-    void updateQuadFromSprite(CAView *sprite, unsigned int index);
+    void updateQuadFromView(CAView *view, unsigned int index);
 
-    CABatchView * addSpriteWithoutQuad(CAView*child, unsigned int z, int aTag);
+    CABatchView * addViewWithoutQuad(CAView* view, unsigned int z, int aTag);
 
 private:
     
-    void updateAtlasIndex(CAView* sprite, int* curIndex);
+    void updateAtlasIndex(CAView* view, int* curIndex);
     
     void swap(int oldIndex, int newIndex);
     
@@ -110,7 +109,7 @@ protected:
     
     ccBlendFunc m_blendFunc;
 
-    CCArray* m_pobDescendants;
+    CAVector<CAView*> m_obDescendants;
 };
 
 // end of sprite_nodes group
